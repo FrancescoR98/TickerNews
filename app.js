@@ -55,18 +55,34 @@ setInterval(updateClock,5000);updateClock();
 
 function buildMarqueeText(ts){const t=ts.join(SEP);return`${t}${SEP}${t}${SEP}`;}
 
-async function fetchLocal(force=false){
-  const url = `${DATA_URL}${force ? '?refresh=1' : ''}&ts=${Date.now()}`;
-  const r=await fetch(url,{cache:"no-store",headers:{"Accept":"application/json"}});
-  const ct=r.headers.get("content-type")||"";
-  if(!r.ok||!ct.includes("application/json")){
-    const text=await r.text();
-    throw new Error(`Bad response (${r.status}) content-type=${ct} body-start=${text.slice(0,60)}`);
+async function fetchLocal(force = false) {
+  const url = `${DATA_URL}${force ? '?refresh=1&ts=' + Date.now() : ''}`;
+  const r = await fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/xml,text/xml' } });
+  const ct = r.headers.get('content-type');
+  if (!r.ok || !ct?.includes('xml')) {
+    const text = await r.text();
+    throw new Error(`Bad response ${r.status}, content-type ${ct}\n${text.slice(0, 60)}...`);
   }
-  return r.json();
+  const xmlText = await r.text();
+  return parseAdnkronosXML(xmlText);  // Nuova funzione
 }
 
-function extractTitles(p){try{const n=p?.json?.news??[];return n.slice(0,MAX_ITEMS).map(x=>x?.title??"").filter(Boolean);}catch{return[];}}
+function parseAdnkronosXML(xmlText) {
+  // Regex per estrarre array news da <json.news>...
+  const jsonMatch = xmlText.match(/<json[^>]*>\s*(\{.*?\})\s*<\/json>/s);
+  if (!jsonMatch) throw new Error('No <json> found');
+  const jsonStr = jsonMatch[1];
+  const data = JSON.parse(jsonStr);
+  return data.news || [];
+}
+
+function extractTitles(news) {
+  try {
+    return news.slice(0, MAX_ITEMS).map(x => x?.title || '').filter(Boolean);
+  } catch {
+    return [];
+  }
+}
 
 async function render(force=false){
   const bar=document.getElementById("ticker");
