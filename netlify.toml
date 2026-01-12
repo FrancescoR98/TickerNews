@@ -1,7 +1,6 @@
-[[edge_functions]]
-path = "/api/*"
-function = "adnkronos"
-
 [build]
-publish = "."
-command = "echo 'Static hosting'"
+  publish = "."
+  command = ""
+
+[functions]
+  node_bundler = "esbuild"
