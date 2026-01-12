@@ -1,0 +1,7 @@
+[[edge_functions]]
+path = "/api/*"
+function = "adnkronos"
+
+[build]
+publish = "."
+command = "echo 'Static hosting'"
